@@ -1,358 +1,135 @@
 <template>
     <div>
-        <button @click="generate">Generate</button>
-    </div>
-    <div id="numbers">
-        <div id="cell-list">
-            <button style="width:40px;height:40px;border:1px solid #000;">
-                {{ one }}
-            </button>
-            <button style="width:40px;height:40px;border:1px solid #000;">
-                {{ two }}
-            </button>
-            <button style="width:40px;height:40px;border:1px solid #000;">
-                {{ three }}
-            </button>
-            <button style="width:40px;height:40px;border:1px solid #000;">
-                {{ four }}
-            </button>
-            <button style="width:40px;height:40px;border:1px solid #000;">
-                {{ five }}
-            </button>
-            <button style="width:40px;height:40px;border:1px solid #000;">
-                {{ six }}
-            </button>
+        <div>
+            <button @click="generate">Generate</button>
+        </div>
+        <div id="numbers">
+            <div id="cell-list">
+                <button
+                  v-for="(number, index) in numberList"
+                  :key="index" style="width:40px;height:40px;border:1px solid #000;"
+                >
+                    {{ number }}
+                </button>
+            </div>
+        </div>
+        <div>
+            <h2>Generated Numbers:</h2>
+            <button @click="convertExcelToJson">Convert Excel to JSON</button>
+            <div v-if="jsonData.length">
+                <p v-for="(row, index) in jsonData" :key="index">{{ row }}</p>
+            </div>
         </div>
     </div>
 </template>
 
-<script>
+<script setup>
+// eslint-disable-next-line import/no-extraneous-dependencies
+import * as XLSX from 'xlsx';
+import { ref } from 'vue';
 
-export default {
-  name: 'SixFortyNine',
-  data() {
-    return {
-      one: 0,
-      two: 0,
-      three: 0,
-      four: 0,
-      five: 0,
-      six: 0,
-      list1: [],
-      list2: [],
+const one = ref(0);
+const two = ref(0);
+const three = ref(0);
+const four = ref(0);
+const five = ref(0);
+const six = ref(0);
+
+const numbersList = ref([]);
+
+const jsonData = ref([]);
+
+const convertExcelToJson = async () => {
+  try {
+    const response = await fetch('/number_history.xlsx');
+    const blob = await response.blob();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const binary = e.target.result;
+      const data = new Uint8Array(binary);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonDataValue = XLSX.utils.sheet_to_json(worksheet);
+
+      // Transform JSON data to desired format
+      const transformedData = jsonDataValue.map((row) => ({
+        date: row.date,
+        n1: row.n1,
+        n2: row.n2,
+        n3: row.n3,
+        n4: row.n4,
+        n5: row.n5,
+        n6: row.n6,
+      }));
+
+      jsonData.value = transformedData;
+
+      // Generate numbers after converting Excel to JSON
+      // eslint-disable-next-line no-use-before-define
+      generateNumbers();
     };
-  },
-  methods: {
-    generate() {
-      this.genOne();
 
-      this.genTwo();
-      if (this.two === this.one + 1 && this.one < 49) {
-        this.list1.push(this.one, this.two);
-      }
-      if (this.two === this.one - 1 && this.one > 1) {
-        this.list1.push(this.two, this.one);
-      }
+    reader.readAsArrayBuffer(blob);
+  } catch (error) {
+    console.error('Error loading Excel file:', error);
+  }
+};
 
-      this.genThree();
-      if (this.list1.length === 0) {
-        if (this.three === this.one + 1 && this.three === this.two - 1) {
-          this.list1.push(this.one, this.three, this.two);
-        }
-        if (this.three === this.two + 1 && this.three === this.one - 1) {
-          this.list1.push(this.two, this.three, this.one);
-        }
-        //
-        if (this.three === this.one + 1 && this.one < 49 && this.list1.length === 0) {
-          this.list1.push(this.one, this.three);
-        }
-        if (this.three === this.one - 1 && this.one > 1 && this.list1.length === 0) {
-          this.list1.push(this.three, this.one);
-        }
-        if (this.three === this.two + 1 && this.two < 49 && this.list1.length === 0) {
-          this.list1.push(this.two, this.three);
-        }
-        if (this.three === this.two - 1 && this.two > 1 && this.list1.length === 0) {
-          this.list1.push(this.three, this.two);
-        }
-      }
-      if (this.list1.length === 2 && !this.list1.includes(this.three)) {
-        if (this.three === this.list1[1] + 1 && this.list1[1] < 49) {
-          this.list1.push(this.three);
-        }
-        if (this.three === this.list1[0] - 1 && this.list1[0] > 1) {
-          this.list1.unshift(this.three);
-        }
-      }
+const generateNumbers = () => {
+  // Get the historic numbers from the converted JSON data
+  // eslint-disable-next-line max-len
+  const historicNumbers = jsonData.value.flatMap((row) => [row.n1, row.n2, row.n3, row.n4, row.n5, row.n6]);
 
-      this.genFour();
-      if (this.list1.length === 0) {
-        if (this.four === this.one + 1 && this.four === this.two - 1) {
-          this.list1.push(this.one, this.four, this.two);
-        }
-        if (this.four === this.one + 1 && this.four === this.three - 1) {
-          this.list1.push(this.one, this.four, this.three);
-        }
-        if (this.four === this.two + 1 && this.four === this.one - 1) {
-          this.list1.push(this.two, this.four, this.one);
-        }
-        if (this.four === this.two + 1 && this.four === this.three - 1) {
-          this.list1.push(this.two, this.four, this.three);
-        }
-        if (this.four === this.three + 1 && this.four === this.one - 1) {
-          this.list1.push(this.three, this.four, this.one);
-        }
-        if (this.four === this.three + 1 && this.four === this.two - 1) {
-          this.list1.push(this.three, this.four, this.two);
-        }
-        //
-        if (this.four === this.one + 1 && this.one < 49 && this.list1.length === 0) {
-          this.list1.push(this.one, this.four);
-        }
-        if (this.four === this.one - 1 && this.one > 1 && this.list1.length === 0) {
-          this.list1.push(this.four, this.one);
-        }
-        if (this.four === this.two + 1 && this.two < 49 && this.list1.length === 0) {
-          this.list1.push(this.two, this.four);
-        }
-        if (this.four === this.two - 1 && this.two > 1 && this.list1.length === 0) {
-          this.list1.push(this.four, this.two);
-        }
-        if (this.four === this.three + 1 && this.three < 49 && this.list1.length === 0) {
-          this.list1.push(this.three, this.four);
-        }
-        if (this.four === this.three - 1 && this.three > 1 && this.list1.length === 0) {
-          this.list1.push(this.four, this.three);
-        }
-      }
-      if (this.list1.length === 2 && !this.list1.includes(this.four)) {
-        if (this.four === this.list1[1] + 1 && this.list1[1] < 49) {
-          this.list1.push(this.four);
-        }
-        if (this.four === this.list1[0] - 1 && this.list1[0] > 1) {
-          this.list1.unshift(this.four);
-        }
-        if (this.four === this.one + 1 && this.one < 49 && this.list1.length < 3) {
-          this.list2.push(this.one, this.four);
-        }
-        if (this.four === this.one - 1 && this.one > 1 && this.list1.length < 3) {
-          this.list2.push(this.four, this.one);
-        }
-        if (this.four === this.two + 1 && this.two < 49 && this.list1.length < 3) {
-          this.list2.push(this.two, this.four);
-        }
-        if (this.four === this.two - 1 && this.two > 1 && this.list1.length < 3) {
-          this.list2.push(this.four, this.two);
-        }
-        if (this.four === this.three + 1 && this.three < 49 && this.list1.length < 3) {
-          this.list2.push(this.three, this.four);
-        }
-        if (this.four === this.three - 1 && this.three > 1 && this.list1.length < 3) {
-          this.list2.push(this.four, this.three);
-        }
-      }
+  // Calculate the frequency of each number
+  const frequencyMap = {};
+  historicNumbers.forEach((number) => {
+    frequencyMap[number] = (frequencyMap[number] || 0) + 1;
+  });
 
-      this.genFive();
-      if (this.list1.length === 0) {
-        if (this.five === this.one + 1 && this.five === this.two - 1) {
-          this.list1.push(this.one, this.five, this.two);
-        }
-        if (this.five === this.one + 1 && this.five === this.three - 1) {
-          this.list1.push(this.one, this.five, this.three);
-        }
-        if (this.five === this.one + 1 && this.five === this.four - 1) {
-          this.list1.push(this.one, this.five, this.four);
-        }
-        if (this.five === this.two + 1 && this.five === this.one - 1) {
-          this.list1.push(this.two, this.five, this.one);
-        }
-        if (this.five === this.two + 1 && this.five === this.three - 1) {
-          this.list1.push(this.two, this.five, this.three);
-        }
-        if (this.five === this.two + 1 && this.five === this.four - 1) {
-          this.list1.push(this.two, this.five, this.four);
-        }
-        if (this.five === this.three + 1 && this.five === this.one - 1) {
-          this.list1.push(this.three, this.five, this.one);
-        }
-        if (this.five === this.three + 1 && this.five === this.two - 1) {
-          this.list1.push(this.three, this.five, this.two);
-        }
-        if (this.five === this.three + 1 && this.five === this.four - 1) {
-          this.list1.push(this.three, this.five, this.four);
-        }
-        if (this.five === this.four + 1 && this.five === this.one - 1) {
-          this.list1.push(this.four, this.five, this.one);
-        }
-        if (this.five === this.four + 1 && this.five === this.two - 1) {
-          this.list1.push(this.four, this.five, this.two);
-        }
-        if (this.five === this.four + 1 && this.five === this.three - 1) {
-          this.list1.push(this.four, this.five, this.three);
-        }
-        //
-        if (this.five === this.one + 1 && this.one < 49 && this.list1.length === 0) {
-          this.list1.push(this.one, this.five);
-        }
-        if (this.five === this.one - 1 && this.one > 1 && this.list1.length === 0) {
-          this.list1.push(this.five, this.one);
-        }
-        if (this.five === this.two + 1 && this.two < 49 && this.list1.length === 0) {
-          this.list1.push(this.two, this.five);
-        }
-        if (this.five === this.two - 1 && this.two > 1 && this.list1.length === 0) {
-          this.list1.push(this.five, this.two);
-        }
-        if (this.five === this.three + 1 && this.three < 49 && this.list1.length === 0) {
-          this.list1.push(this.three, this.five);
-        }
-        if (this.five === this.three - 1 && this.three > 1 && this.list1.length === 0) {
-          this.list1.push(this.five, this.three);
-        }
-        if (this.five === this.four + 1 && this.four < 49 && this.list1.length === 0) {
-          this.list1.push(this.four, this.five);
-        }
-        if (this.five === this.four - 1 && this.four > 1 && this.list1.length === 0) {
-          this.list1.push(this.five, this.four);
-        }
-      }
-      if (this.list1.length === 2 && !this.list1.includes(this.five)) {
-        if (this.five === this.list1[1] + 1 && this.list1[1] < 49) {
-          this.list1.push(this.five);
-        }
-        if (this.five === this.list1[0] - 1 && this.list1[0] > 1) {
-          this.list1.unshift(this.five);
-        }
-        if (this.five === this.one + 1 && this.one < 49
-        && this.list1.length < 3 && this.list2.length < 2) {
-          this.list2.push(this.one, this.five);
-        }
-        if (this.five === this.one - 1 && this.one > 1
-        && this.list1.length < 3 && this.list2.length < 2) {
-          this.list2.push(this.five, this.one);
-        }
-        if (this.five === this.two + 1 && this.two < 49
-        && this.list1.length < 3 && this.list2.length < 2) {
-          this.list2.push(this.two, this.five);
-        }
-        if (this.five === this.two - 1 && this.two > 1
-        && this.list1.length < 3 && this.list2.length < 2) {
-          this.list2.push(this.five, this.two);
-        }
-        if (this.five === this.three + 1 && this.three < 49
-        && this.list1.length < 3 && this.list2.length < 2) {
-          this.list2.push(this.three, this.five);
-        }
-        if (this.five === this.three - 1 && this.three > 1
-        && this.list1.length < 3 && this.list2.length < 2) {
-          this.list2.push(this.five, this.three);
-        }
-        if (this.five === this.four + 1 && this.four < 49
-        && this.list1.length < 3 && this.list2.length < 2) {
-          this.list2.push(this.three, this.five);
-        }
-        if (this.five === this.four - 1 && this.four > 1
-        && this.list1.length < 3 && this.list2.length < 2) {
-          this.list2.push(this.five, this.four);
-        }
-      }
-      if (this.list1.length === 3 && !this.list1.includes(this.five)) {
-        if (this.five === this.one + 1 && this.one < 49) {
-          this.list2.push(this.one, this.five);
-        }
-        if (this.five === this.one - 1 && this.one > 1) {
-          this.list2.push(this.five, this.one);
-        }
-        if (this.five === this.two + 1 && this.two < 49) {
-          this.list2.push(this.two, this.five);
-        }
-        if (this.five === this.two - 1 && this.two > 1) {
-          this.list2.push(this.five, this.two);
-        }
-        if (this.five === this.three + 1 && this.three < 49) {
-          this.list2.push(this.three, this.five);
-        }
-        if (this.five === this.three - 1 && this.three > 1) {
-          this.list2.push(this.five, this.three);
-        }
-        if (this.five === this.four + 1 && this.four < 49) {
-          this.list2.push(this.four, this.five);
-        }
-        if (this.five === this.four - 1 && this.four > 1) {
-          this.list2.push(this.five, this.four);
-        }
-      }
+  // Generate new numbers based on frequency
+  const newNumbers = [];
+  const usedNumbers = new Set();
+  while (newNumbers.length < 6) {
+    // Generate a random number between 1 and 49
+    const randomNumber = Math.floor(Math.random() * 49) + 1;
 
-      this.genSix();
+    // Check if the number is not already used and its frequency is not exhausted
+    // eslint-disable-next-line max-len
+    if (!usedNumbers.has(randomNumber) && frequencyMap[randomNumber] > (newNumbers.filter((n) => n === randomNumber).length || 0)) {
+      newNumbers.push(randomNumber);
+      usedNumbers.add(randomNumber);
+    }
+  }
 
-      this.list1 = [];
-      this.list2 = [];
-    },
-    genOne() {
-      this.one = Math.floor(Math.random() * 49) + 1;
-    },
-    genTwo() {
-      this.two = Math.floor(Math.random() * 49) + 1;
-      if (this.two === this.one) {
-        this.genTwo();
-      }
-    },
-    genThree() {
-      this.three = Math.floor(Math.random() * 49) + 1;
-      if (this.three === this.one || this.three === this.two) {
-        this.genThree();
-      }
-    },
-    genFour() {
-      this.four = Math.floor(Math.random() * 49) + 1;
-      if (this.four === this.one
-      || this.four === this.two
-      || this.four === this.three
-      || this.four === this.list1[0] - 1
-      || this.four === this.list1[2] + 1) {
-        this.genFour();
-      }
-    },
-    genFive() {
-      this.five = Math.floor(Math.random() * 49) + 1;
-      if (this.five === this.one
-      || this.five === this.two
-      || this.five === this.three
-      || this.five === this.four
-      || this.five === this.list1[0] - 1
-      || this.five === this.list1[2] + 1
-      || (this.five === this.list1[1] + 1 && this.five === this.list2[0] - 1)
-      || (this.five === this.list2[1] + 1 && this.five === this.list1[0] - 1)
-      ) {
-        this.genFive();
-      }
-    },
-    genSix() {
-      this.six = Math.floor(Math.random() * 49) + 1;
-      if (this.six === this.one
-      || this.six === this.two
-      || this.six === this.three
-      || this.six === this.four
-      || this.six === this.five
-      || this.six === this.list1[0] - 1
-      || this.six === this.list1[2] + 1
-      || (this.six === this.list1[1] + 1 && this.six === this.list2[0] - 1)
-      || (this.six === this.list2[1] + 1 && this.six === this.list1[0] - 1)
-      || (this.list1.length === 3 && this.list2.length === 2 && (
-        this.six === this.list2[0] - 1
-        || this.six === this.list2[2] + 1))) {
-        this.genSix();
-      }
-    },
-  },
+  console.log('Generated numbers:', newNumbers);
+
+  numbersList.value = newNumbers;
+
+  console.log('Numbers list:', numbersList);
+
+  // Update the refs with the generated numbers
+  // eslint-disable-next-line prefer-destructuring
+  one.value = newNumbers[0];
+  // eslint-disable-next-line prefer-destructuring
+  two.value = newNumbers[1];
+  // eslint-disable-next-line prefer-destructuring
+  three.value = newNumbers[2];
+  // eslint-disable-next-line prefer-destructuring
+  four.value = newNumbers[3];
+  // eslint-disable-next-line prefer-destructuring
+  five.value = newNumbers[4];
+  // eslint-disable-next-line prefer-destructuring
+  six.value = newNumbers[5];
 };
 </script>
 
 <style>
-#numbers{
+#numbers {
     padding-top: 20px;
 }
-#cell-list button{
+
+#cell-list button {
     display: inline;
 }
 </style>
