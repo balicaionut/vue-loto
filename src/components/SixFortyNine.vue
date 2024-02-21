@@ -1,24 +1,18 @@
 <template>
     <div>
-        <div>
-            <button @click="generate">Generate</button>
-        </div>
         <div id="numbers">
+          <h2>Generated Numbers:</h2>
             <div id="cell-list">
                 <button
-                  v-for="(number, index) in numberList"
+                  v-for="(number, index) in numbersList"
                   :key="index" style="width:40px;height:40px;border:1px solid #000;"
                 >
                     {{ number }}
                 </button>
             </div>
         </div>
-        <div>
-            <h2>Generated Numbers:</h2>
-            <button @click="convertExcelToJson">Convert Excel to JSON</button>
-            <div v-if="jsonData.length">
-                <p v-for="(row, index) in jsonData" :key="index">{{ row }}</p>
-            </div>
+        <div style="padding: 20px">
+            <button @click="convertExcelToJson">Generate</button>
         </div>
     </div>
 </template>
@@ -27,13 +21,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as XLSX from 'xlsx';
 import { ref } from 'vue';
-
-const one = ref(0);
-const two = ref(0);
-const three = ref(0);
-const four = ref(0);
-const five = ref(0);
-const six = ref(0);
 
 const numbersList = ref([]);
 
@@ -46,24 +33,26 @@ const convertExcelToJson = async () => {
     const reader = new FileReader();
 
     reader.onload = (e) => {
-      const binary = e.target.result;
-      const data = new Uint8Array(binary);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonDataValue = XLSX.utils.sheet_to_json(worksheet);
+      if (!jsonData.value.length) {
+        const binary = e.target.result;
+        const data = new Uint8Array(binary);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonDataValue = XLSX.utils.sheet_to_json(worksheet);
 
-      // Transform JSON data to desired format
-      const transformedData = jsonDataValue.map((row) => ({
-        date: row.date,
-        n1: row.n1,
-        n2: row.n2,
-        n3: row.n3,
-        n4: row.n4,
-        n5: row.n5,
-        n6: row.n6,
-      }));
+        // Transform JSON data to desired format
+        const transformedData = jsonDataValue.map((row) => ({
+          date: row.date,
+          n1: row.n1,
+          n2: row.n2,
+          n3: row.n3,
+          n4: row.n4,
+          n5: row.n5,
+          n6: row.n6,
+        }));
 
-      jsonData.value = transformedData;
+        jsonData.value = transformedData;
+      }
 
       // Generate numbers after converting Excel to JSON
       // eslint-disable-next-line no-use-before-define
@@ -76,7 +65,7 @@ const convertExcelToJson = async () => {
   }
 };
 
-const generateNumbers = () => {
+const generateNumbers = async () => {
   // Get the historic numbers from the converted JSON data
   // eslint-disable-next-line max-len
   const historicNumbers = jsonData.value.flatMap((row) => [row.n1, row.n2, row.n3, row.n4, row.n5, row.n6]);
@@ -102,25 +91,7 @@ const generateNumbers = () => {
     }
   }
 
-  console.log('Generated numbers:', newNumbers);
-
   numbersList.value = newNumbers;
-
-  console.log('Numbers list:', numbersList);
-
-  // Update the refs with the generated numbers
-  // eslint-disable-next-line prefer-destructuring
-  one.value = newNumbers[0];
-  // eslint-disable-next-line prefer-destructuring
-  two.value = newNumbers[1];
-  // eslint-disable-next-line prefer-destructuring
-  three.value = newNumbers[2];
-  // eslint-disable-next-line prefer-destructuring
-  four.value = newNumbers[3];
-  // eslint-disable-next-line prefer-destructuring
-  five.value = newNumbers[4];
-  // eslint-disable-next-line prefer-destructuring
-  six.value = newNumbers[5];
 };
 </script>
 
