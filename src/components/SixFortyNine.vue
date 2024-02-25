@@ -182,28 +182,33 @@ const generateNumbers = async () => {
   numbersList.value = newNumbers;
 
   if (isCheckAccuracy.value) {
-    latestNumbers.value.forEach((number) => {
-      if (newNumbers.includes(number)) {
-        countMatches.value += 1;
-      }
-    });
-    countGenerated.value += 1;
-    if (countGenerated.value < 5000) {
-      if (countMatches.value === 4) {
-        matchLog.value.push(`4 matches at ${countGenerated.value}`);
-        console.log(matchLog.value);
-      }
-      if (countMatches.value === 5) {
-        matchLog.value.push(`5 matches at ${countGenerated.value}`);
-        console.log(matchLog.value);
-      }
-      if (countMatches.value === 6) {
-        matchLog.value.push(`6 matches at ${countGenerated.value}`);
-        console.log(matchLog.value);
-      }
-      countMatches.value = 0;
-      generateNumbers();
+    // eslint-disable-next-line no-use-before-define
+    runCheckCodeAccuracy(newNumbers);
+  }
+};
+
+const runCheckCodeAccuracy = (newNumbers) => {
+  latestNumbers.value.forEach((number) => {
+    if (newNumbers.includes(number)) {
+      countMatches.value += 1;
     }
+  });
+  countGenerated.value += 1;
+  if (countGenerated.value < 5000) {
+    if (countMatches.value === 4) {
+      matchLog.value.push(`4 matches at ${countGenerated.value}`);
+      console.log(matchLog.value);
+    }
+    if (countMatches.value === 5) {
+      matchLog.value.push(`5 matches at ${countGenerated.value}`);
+      console.log(matchLog.value);
+    }
+    if (countMatches.value === 6) {
+      matchLog.value.push(`6 matches at ${countGenerated.value}`);
+      console.log(matchLog.value);
+    }
+    countMatches.value = 0;
+    generateNumbers();
   }
 };
 </script>
